@@ -3,12 +3,11 @@ using UnityEngine.UI;
 
 public class Score : MonoBehaviour
 {
-    public Text scoreText; // Поле для отображения очков
-    private int score = 0; // Переменная для хранения текущего количества очков
-    private Card firstCard; // Первая выбранная карточка
-    private Card secondCard; // Вторая выбранная карточка
+    public Text scoreText;
+    private int score = 0;
+    private Card firstCard;
+    private Card secondCard;
 
-    // Метод, который вызывается, когда карточка выбрана
     public void OnCardSelected(Card card)
     {
         if (firstCard == null)
@@ -24,20 +23,18 @@ public class Score : MonoBehaviour
 
     private System.Collections.IEnumerator CheckForMatch()
     {
-        yield return new WaitForSeconds(1); // Подождите секунду для визуального эффекта
+        yield return new WaitForSeconds(1);
 
-        if (firstCard.id == secondCard.id) // Проверьте совпадение
+        if (firstCard.id == secondCard.id)
         {
-            score += 10; // Увеличьте очки
-            scoreText.text = "Score: " + score; // Обновите текст очков
-            // Добавьте здесь логику для уничтожения пары карточек, если нужно
+            score += 10;
+            scoreText.text = "Score: " + score;
         }
         else
         {
-            // Добавьте здесь логику для скрытия карточек, если они не совпадают
         }
 
-        firstCard = null; // Сбросьте первую карточку
-        secondCard = null; // Сбросьте вторую карточку
+        firstCard = null;
+        secondCard = null;
     }
 }

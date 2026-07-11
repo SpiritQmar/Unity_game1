@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class ShuffleCards : MonoBehaviour
 {
-    public Transform grid; // Ссылка на родительский объект (Grid), который содержит карты
+    public Transform grid;
 
     void Start()
     {
@@ -12,7 +12,6 @@ public class ShuffleCards : MonoBehaviour
 
     void Shuffle()
     {
-        // Получаем всех детей (карты) из Grid
         List<Transform> cards = new List<Transform>();
 
         foreach (Transform card in grid)
@@ -20,7 +19,6 @@ public class ShuffleCards : MonoBehaviour
             cards.Add(card);
         }
 
-        // Перемешиваем список карт
         for (int i = 0; i < cards.Count; i++)
         {
             Transform temp = cards[i];
@@ -29,7 +27,6 @@ public class ShuffleCards : MonoBehaviour
             cards[randomIndex] = temp;
         }
 
-        // Обновляем позиции карт в иерархии (внутри Grid)
         for (int i = 0; i < cards.Count; i++)
         {
             cards[i].SetSiblingIndex(i);

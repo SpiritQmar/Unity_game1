@@ -3,15 +3,14 @@ using UnityEngine.UI;
 
 public class Card : MonoBehaviour
 {
-    public int id; // Уникальный идентификатор карты
-    public Image image; // Ссылка на компонент Image
-    public Button button; // Ссылка на компонент Button
-    public Sprite backSprite; // Спрайт рубашки карты
-    public Sprite frontSprite; // Спрайт, который нужно сопоставить
+    public int id;
+    public Image image;
+    public Button button;
+    public Sprite backSprite;
+    public Sprite frontSprite;
 
     private void Awake()
     {
-        // Получаем компоненты Image и Button, если они не назначены в инспекторе
         if (image == null)
         {
             image = GetComponent<Image>();
@@ -25,7 +24,6 @@ public class Card : MonoBehaviour
 
     private void Start()
     {
-        // Установить начальный спрайт на рубашку
         image.sprite = backSprite;
         button.onClick.AddListener(OnCardClicked);
     }
@@ -35,23 +33,23 @@ public class Card : MonoBehaviour
         GameManager.Instance.CardSelected(this);
     }
 
-    public void ShowCard()
+    public void ShowCard()  
     {
-        image.sprite = frontSprite; // Установите спрайт карты
-        button.interactable = false; // Деактивируйте кнопку после открытия
-        // Убедитесь, что цвет не изменен
+        image.sprite = frontSprite;
+        button.interactable = false;
+
         Color color = image.color;
-        color.a = 1f; // Установите альфа-канал в 1 (непрозрачный)
+        color.a = 1f;
         image.color = color;
     }
 
     public void HideCard()
     {
-        image.sprite = backSprite; // Вернуть рубашку карты
-        button.interactable = true; // Активируйте кнопку для выбора
-        // Убедитесь, что цвет не изменен
+        image.sprite = backSprite;
+        button.interactable = true;
+
         Color color = image.color;
-        color.a = 1f; // Установите альфа-канал в 1 (непрозрачный)
+        color.a = 1f;
         image.color = color;
     }
 }

@@ -2,37 +2,111 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using UnityEngine.SceneManagement; // Добавьте эту строку
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    public List<Card> cards = new List<Card>(); // Список всех карт
+    public List<Card> cards = new List<Card>();
     private Card firstCard, secondCard;
     private int pairsFound = 0;
 
-    public TMP_Text scoreText; // Поле для отображения очков
-    public TMP_Text timeText; // Поле для отображения оставшегося времени
-    public TMP_Text movesText; // Поле для отображения оставшихся ходов
+    public TMP_Text scoreText;
+    public TMP_Text timeText;
+    public TMP_Text movesText;
+    public TMP_Text gameOverText;
+    public GameObject gameOverPanel;
+    public CanvasGroup gameOverCanvasGroup;
 
-    private int score = 0; // Переменная для хранения текущего количества очков
-    private float timeLimit = 60f; // Ограничение времени (в секундах)
-    private int maxMoves = 20; // Максимальное количество ходов
-    private int currentMoves = 0; // Текущее количество использованных ходов
-    private bool gameOver = false; // Флаг окончания игры
+    private int score = 0;
+    private float timeLimit = 70f;
+    private int maxMoves = 50;
+    private int currentMoves = 0;
+    private bool gameOver = false;
 
     private void Awake()
     {
         Instance = this;
     }
 
-    private void Start()
+private void Start()
+{
+    SetGameParametersForCurrentScene();
+    InitializeCards();
+    ShuffleCards();
+    UpdateScoreText();
+    StartCoroutine(TimeCountdown());
+    UpdateMovesText();
+    gameOverPanel.SetActive(false);
+}
+
+
+private void SetGameParametersForCurrentScene()
+{
+    int sceneIndex = SceneManager.GetActiveScene().buildIndex;
+
+    switch (sceneIndex)
     {
-        ShuffleCards();
-        UpdateScoreText(); // Обновите текст очков при старте игры
-        StartCoroutine(TimeCountdown()); // Запускаем обратный отсчет времени
-        UpdateMovesText(); // Обновляем текст ходов
+        case 5:
+            timeLimit = 30f;
+            maxMoves = 30;
+            break;
+        case 6:
+            timeLimit = 120f;
+            maxMoves = 90;
+            break;
+        default:
+            timeLimit = 70f;
+            maxMoves = 50;
+            break;
+    }
+}
+
+
+private void InitializeCards()
+{
+    cards.Clear();
+
+    int numberOfPairs = 9;
+    switch (SceneManager.GetActiveScene().buildIndex)
+    {
+        case 5:
+            numberOfPairs = 9;
+            break;
+        case 6:
+            numberOfPairs = 16;
+            break;
+        default:
+            numberOfPairs = 9;
+            break;
+    }
+
+    for (int i = 0; i < numberOfPairs; i++) 
+    {
+        Card card1 = CreateCard(i);
+        Card card2 = CreateCard(i);
+        cards.Add(card1);
+        cards.Add(card2);
+    }
+}
+
+
+    private Card CreateCard(int id)
+    {
+        Card newCard = new Card();
+        newCard.id = id;
+        return newCard;
+    }
+
+    private void CheckGameOver()
+    {
+        Debug.Log("Пары найдены: " + pairsFound + " из " + (cards.Count / 2));
+        if (pairsFound == cards.Count / 2)
+        {
+            Debug.Log("Все пары найдены! Завершаем игру.");
+            EndGame("Вы нашли все пары!");
+        }
     }
 
     private IEnumerator TimeCountdown()
@@ -41,10 +115,10 @@ public class GameManager : MonoBehaviour
         {
             yield return new WaitForSeconds(1f);
             timeLimit--;
-            UpdateTimeText(); // Обновляем текст времени
+            UpdateTimeText();
         }
 
-        if (!gameOver) // Если игра не закончена
+        if (!gameOver)
         {
             EndGame("Время вышло!");
         }
@@ -52,6 +126,9 @@ public class GameManager : MonoBehaviour
 
     public void CardSelected(Card card)
     {
+        if (firstCard != null && secondCard != null)
+            return;
+
         if (firstCard == null)
         {
             firstCard = card;
@@ -61,10 +138,17 @@ public class GameManager : MonoBehaviour
         {
             secondCard = card;
             secondCard.ShowCard();
-            currentMoves++; // Увеличиваем количество ходов
-            UpdateMovesText(); // Обновляем текст ходов
+            currentMoves++;
+            UpdateMovesText();
 
-            StartCoroutine(CheckForMatch());
+            if (currentMoves >= maxMoves)
+            {
+                EndGame("Ходы закончились!");
+            }
+            else
+            {
+                StartCoroutine(CheckForMatch());
+            }
         }
     }
 
@@ -75,10 +159,11 @@ public class GameManager : MonoBehaviour
         if (firstCard.id == secondCard.id)
         {
             pairsFound++;
-            score += 10; // Увеличьте очки за нахождение пары
-            UpdateScoreText(); // Обновите текст очков
-            StartCoroutine(AnimateScoreText("+10")); // Запустите анимацию текста
-            // Логика для обработки нахождения пары, например, удалить карточки из игры
+            score += 10;
+            UpdateScoreText();
+            StartCoroutine(AnimateScoreText("+10"));
+
+            CheckGameOver();
         }
         else
         {
@@ -88,45 +173,79 @@ public class GameManager : MonoBehaviour
 
         firstCard = null;
         secondCard = null;
-
-        // Проверяем, закончилась ли игра по количеству ходов
-        if (currentMoves >= maxMoves)
-        {
-            EndGame("Вы исчерпали все ходы!");
-        }
     }
 
     private void EndGame(string message)
     {
-        gameOver = true; // Устанавливаем флаг окончания игры
-        Debug.Log(message); // Временное сообщение в консоль
-        
-        // Замените "GameOverScene" на имя вашей сцены окончания игры
+        gameOver = true;
+        gameOverText.text = message;
+        gameOverPanel.SetActive(true);
+
+        StartCoroutine(AnimateGameOverPanel());
+        StartCoroutine(SavePlayerScore());
+        StartCoroutine(DelaySceneChange());
+    }
+
+    private IEnumerator DelaySceneChange()
+    {
+        yield return new WaitForSeconds(4f);
+
         SceneManager.LoadScene("StartMenu");
+    }
+
+    private IEnumerator AnimateGameOverPanel()
+    {
+        float duration = 1f;
+        float elapsedTime = 0f;
+
+        gameOverCanvasGroup.alpha = 0;
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            gameOverCanvasGroup.alpha = Mathf.Lerp(0, 1, elapsedTime / duration);
+            yield return null;
+        }
+    }
+
+    private IEnumerator SavePlayerScore()
+    {
+        string currentPlayer = PlayerPrefs.GetString("CurrentPlayer", "Guest");
+        int currentScore = score;
+
+        Web web = FindObjectOfType<Web>();
+        if (web == null)
+        {
+            Debug.LogError("Web script not found in the scene!");
+            yield break;
+        }
+
+        yield return web.SaveScore(currentPlayer, currentScore,
+            onSuccess: () => Debug.Log("Очки успешно сохранены."),
+            onFailure: (error) => Debug.LogError("Ошибка сохранения очков: " + error));
     }
 
     private void UpdateScoreText()
     {
-        scoreText.text = "Очки: " + score; // Обновите текст очков
+        scoreText.text = "Очки: " + score;
     }
 
     private void UpdateTimeText()
     {
-        timeText.text = "Осталось времени: " + timeLimit; // Обновите текст времени
+        timeText.text = "Осталось времени: " + Mathf.CeilToInt(timeLimit);
     }
 
     private void UpdateMovesText()
     {
-        movesText.text = "Ходы: " + (maxMoves - currentMoves); // Обновите текст ходов
+        movesText.text = "Ходы: " + (maxMoves - currentMoves);
     }
 
     private IEnumerator AnimateScoreText(string additionalScoreText)
     {
         TMP_Text tempText = Instantiate(scoreText, scoreText.transform.parent);
         tempText.text = additionalScoreText;
-        tempText.fontSize = 36; 
-        tempText.color = Color.green; 
-        tempText.transform.position = scoreText.transform.position; 
+        tempText.fontSize = 36;
+        tempText.color = Color.green;
+        tempText.transform.position = scoreText.transform.position;
 
         float duration = 1f;
         float elapsedTime = 0f;
@@ -142,7 +261,7 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        Destroy(tempText.gameObject); 
+        Destroy(tempText.gameObject);
     }
 
     private void ShuffleCards()

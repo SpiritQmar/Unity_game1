@@ -3,9 +3,9 @@ using UnityEngine.UI;
 
 public class ButtonPrefabSpawner : MonoBehaviour
 {
-    public GameObject prefab; // Префаб, который будет создаваться
-    public GameObject parentObject; // Объект, которому будет принадлежать созданный префаб
-    public float destroyDelay = 2f; // Время перед удалением префаба
+    public GameObject prefab;
+    public GameObject parentObject;
+    public float destroyDelay = 2f;
 
     private Button button;
 
@@ -17,13 +17,10 @@ public class ButtonPrefabSpawner : MonoBehaviour
 
     private void SpawnPrefab()
     {
-        // Создание префаба в позиции кнопки
         GameObject spawnedPrefab = Instantiate(prefab, transform.position, Quaternion.identity);
 
-        // Установка родительского объекта
         spawnedPrefab.transform.SetParent(parentObject.transform);
 
-        // Удаление префаба через заданное время
         Destroy(spawnedPrefab, destroyDelay);
     }
 }
